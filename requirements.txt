@@ -7,6 +7,5 @@ pycryptodome
 boto3
 redis
 grammar
-installtomli
 spacy
 vineyard
