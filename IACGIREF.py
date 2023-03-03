@@ -86,8 +86,8 @@ def ui_pdf_file():
 	disabled = False
 	#t1,t2 = st.tabs(['Uploader','Sélectionner'])
 	#with t1:
-		ss['pg_index'] = st.progress(0)
-		st.file_uploader('pdf file', type='pdf', key='pdf_file', disabled=disabled, on_change=index_pdf_file, label_visibility="collapsed")
+	ss['pg_index'] = st.progress(0)
+	st.file_uploader('pdf file', type='pdf', key='pdf_file', disabled=disabled, on_change=index_pdf_file, label_visibility="collapsed")
 		#b_save()
 	#with t2:
 	#	filenames = ['']
