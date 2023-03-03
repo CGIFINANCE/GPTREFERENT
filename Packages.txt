@@ -1,0 +1,14 @@
+
+openai
+PyPDF2
+scikit-learn
+numpy
+tiktoken
+pycryptodome
+boto3
+redis
+grammar
+installtomli
+spacy
+vineyard
+
