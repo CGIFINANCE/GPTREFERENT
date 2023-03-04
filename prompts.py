@@ -7,7 +7,7 @@ TASK = {
 			"Answer the question truthfully based on the text below. "
 			"Include verbatim quote and a comment where to find it in the text (page number). "
 			#"After the quote write a step by step explanation in a new paragraph. "
-			"After the quote write a step by step explanation. En Francais, une explication point par point. "
+			"After the quote écrit une explication analytique. "
 			"Use bullet points. "
 			#"After that try to rephrase the original question so it might give better results. " 
 		),
