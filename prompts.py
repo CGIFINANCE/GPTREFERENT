@@ -4,7 +4,7 @@
 
 TASK = {
 	'v6': (
-			"Answer the question truthfully based on the text below. "
+			"Answer the question truthfully in french based on the text below. "
 			"Include verbatim quote and a comment where to find it in the text (page number). "
 			#"After the quote write a step by step explanation in a new paragraph. "
 			"After the quote écrit une explication analytique. "
