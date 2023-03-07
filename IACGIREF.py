@@ -47,7 +47,8 @@ def ui_info():
 	ui_spacer(1)
 	ui_spacer(1)
 
-api_key="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"
+	
+api_key=st.secrets["OPENAI_KEY"]
 model.use_key(api_key)
 ss['api_key']=api_key
 
