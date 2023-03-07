@@ -47,7 +47,7 @@ def ui_info():
 	ui_spacer(1)
 	ui_spacer(1)
 
-api_key="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"
+api_key="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"
 model.use_key(api_key)
 ss['api_key']=api_key
 
