@@ -29,6 +29,12 @@ from time import time as now
 
 # COMPONENTS
 
+import streamlit as st
+
+def do_stuff_on_page_load() :
+    st.set_page_config(layout="wide")
+
+
 def ui_spacer(n=2, line=False, next_n=0):
 	for _ in range(n):
 		st.write('')
@@ -283,6 +289,7 @@ with st.sidebar:
 		ui_task()
 		ui_hyde_prompt()
 
+do_stuff_on_page_load()
 ui_pdf_file()
 ui_question()
 ui_hyde_answer()
