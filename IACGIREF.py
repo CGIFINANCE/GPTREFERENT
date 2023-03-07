@@ -31,6 +31,31 @@ from time import time as now
 
 import streamlit as st
 
+def add_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebarNav"] {
+                background-image: url(http://placekitten.com/200/200);
+                background-repeat: no-repeat;
+                padding-top: 120px;
+                background-position: 20px 20px;
+            }
+            [data-testid="stSidebarNav"]::before {
+                content: "My Company Name";
+                margin-left: 20px;
+                margin-top: 20px;
+                font-size: 30px;
+                position: relative;
+                top: 100px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+
 
 def ui_spacer(n=2, line=False, next_n=0):
 	for _ in range(n):
@@ -286,6 +311,7 @@ with st.sidebar:
 		ui_task()
 		ui_hyde_prompt()
 
+add_logo()
 ui_pdf_file()
 ui_question()
 ui_hyde_answer()
