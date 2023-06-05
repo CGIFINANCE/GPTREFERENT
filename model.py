@@ -1,3 +1,4 @@
+#pip install -U scikit-learn
 from sklearn.metrics.pairwise import cosine_distances
 
 from collections import Counter

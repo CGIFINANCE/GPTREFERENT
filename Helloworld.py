@@ -4,8 +4,7 @@ st.title("IA DE LA COMMUNAUTE DES REFERENTS")
 st.sidebar.header("Instructions")
 st.sidebar.info('Saisissez votre question et appuyez sur ENTREE')
 model_engine = "text-davinci-003"
-openai.api_key = "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"
-
+openai.api_key = "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"
 
 def ChatGPT(user_query):
     completion = openai.Completion.create(
