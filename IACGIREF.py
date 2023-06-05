@@ -77,7 +77,6 @@ def ui_info():
 
 	
 api_key=st.secrets["OPENAI_KEY"]
-#api_key="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"
 model.use_key(api_key)
 ss['api_key']=api_key
 
