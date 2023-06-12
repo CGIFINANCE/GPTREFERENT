@@ -1,27 +1,27 @@
 import redis
 from time import strftime
 import os
+from retry import retry
 
 class Stats:
-	def __init__(self, user):
-		self.user = user
+	def __init__(self):
+		self.config = {}
 	
 	def render(self, key):
-		# "usage:v1:{date}:{user}"
 		variables = dict(
 			date = strftime('%Y-%m-%d'),
 			hour = strftime('%H'),
-			user = self.user,
 		)
+		variables.update(self.config)
 		for k,v in variables.items():
-			key = key.replace('{'+k+'}',v) # TODO: other characters? now it's easy to confuse it with f-strings!
+			key = key.replace('['+k+']',v)
 		return key
 	
 
 class DictStats(Stats):
-	def __init__(self, user, data_dict):
-		super().__init__(user)
+	def __init__(self, data_dict):
 		self.data = data_dict
+		self.config = {}
 	
 	def incr(self, key, kv_dict):
 		data = self.data
@@ -34,17 +34,18 @@ class DictStats(Stats):
 	
 	def get(self, key):
 		key = self.render(key)
-		return self.data[key]
+		return self.data.get(key, {})
 
 
 class RedisStats(Stats):
-	def __init__(self, user):
+	def __init__(self):
 		REDIS_URL = os.getenv('REDIS_URL')
 		if not REDIS_URL:
 			raise Exception('No Redis configuration in environment variables!')
-		super().__init__(user)
 		self.db = redis.Redis.from_url(REDIS_URL)
+		self.config = {}
 	
+	@retry(tries=5, delay=0.1)
 	def incr(self, key, kv_dict):
 		# TODO: non critical code -> safe exceptions
 		key = self.render(key)
@@ -54,6 +55,7 @@ class RedisStats(Stats):
 			self.db.zincrby(key, val, member)
 		p.execute()
 	
+	@retry(tries=5, delay=0.1)
 	def get(self, key):
 		# TODO: non critical code -> safe exceptions
 		key = self.render(key)
@@ -61,18 +63,28 @@ class RedisStats(Stats):
 		return {k.decode('utf8'):v for k,v in items}
 
 
-def get_stats(user):
+stats_data_dict = {}
+def get_stats(**kw):
 	MODE = os.getenv('STATS_MODE','').upper()
 	if MODE=='REDIS':
-		return RedisStats(user)
+		stats = RedisStats()
 	else:
-		data_dict = {} # TODO: passed to get_stats
-		return DictStats(user, data_dict)
+		stats = DictStats(stats_data_dict)
+	stats.config.update(kw)
+	return stats
+
 
 
 if __name__=="__main__":
-	s = get_stats('MACIEK')
-	s.incr('aaa:{date}:{user}', dict(a=1,b=2))
-	s.incr('aaa:{date}:{user}', dict(a=1,b=2))
-	print(s.data)
-	print(s.get('aaa:{date}:{user}'))
+	s1 = get_stats(user='maciek')
+	s1.incr('aaa:[date]:[user]', dict(a=1,b=2))
+	s1.incr('aaa:[date]:[user]', dict(a=1,b=2))
+	print(s1.data)
+	print(s1.get('aaa:[date]:[user]'))
+	#
+	s2 = get_stats(user='kerbal')
+	s2.incr('aaa:[date]:[user]', dict(a=1,b=2))
+	s2.incr('aaa:[date]:[user]', dict(a=1,b=2))
+	print(s2.data)
+	print(s2.get('aaa:[date]:[user]'))
+

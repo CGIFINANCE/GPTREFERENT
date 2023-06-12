@@ -13,7 +13,6 @@ COPY . .
 RUN pip install --no-cache-dir flask
 RUN pip3 install -r requirements.txt --no-cache-dir
 
-EXPOSE 8501
+EXPOSE 80
 
-
-ENTRYPOINT ["streamlit", "run", "IACGIREF.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "IACGIREF.py","--server.port=443", "--server.address=0.0.0.0"]

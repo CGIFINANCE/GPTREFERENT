@@ -1,11 +1,11 @@
+__version__ = "1"
+app_name = "Ask my PDF"
 
-app_name = "IA CGI REF"
-version= "1"
 
 # BOILERPLATE
 
 import streamlit as st
-st.set_page_config(layout='centered', page_title=f'{app_name} {version}')
+st.set_page_config(layout='centered', page_title=f'{app_name} {__version__}')
 ss = st.session_state
 if 'debug' not in ss: ss['debug'] = {}
 import css
@@ -22,14 +22,35 @@ st.sidebar.info("Interrogez l'expert derrière un document de référence en pos
 import prompts
 import model
 import storage
-import stats
 import feedback
+import cache
+import os
 
 from time import time as now
 
-# COMPONENTS
+# HANDLERS
 
-import streamlit as st
+def on_api_key_change():
+	api_key = ss.get('api_key') or os.getenv('OPENAI_KEY')	
+	ss['api_key'] = api_key
+	model.use_key(api_key) # TODO: empty api_key
+	#
+	if 'data_dict' not in ss: ss['data_dict'] = {} # used only with DictStorage
+	ss['storage'] = storage.get_storage(api_key, data_dict=ss['data_dict'])
+	ss['cache'] = cache.get_cache()
+	ss['user'] = ss['storage'].folder # TODO: refactor user 'calculation' from get_storage
+	#model.set_user(ss['user'])
+	ss['feedback'] = feedback.get_feedback_adapter(ss['user'])
+	ss['feedback_score'] = ss['feedback'].get_score()
+	#
+	ss['debug']['storage.folder'] = ss['storage'].folder
+	ss['debug']['storage.class'] = ss['storage'].__class__.__name__
+
+# ss['community_user'] = os.getenv('COMMUNITY_USER')
+# if 'user' not in ss and ss['community_user']:
+on_api_key_change() # use community key
+
+# COMPONENTS
 
 def add_logo():
     st.markdown(
@@ -67,7 +88,8 @@ def ui_spacer(n=2, line=False, next_n=0):
 
 def ui_info():
 	st.markdown(f"""
-	version {version}
+	# Ask my PDF
+	version {__version__}
 	
 	Projet Mon super assistant (construit à partir des API OPENAI L. BOUDET 03/2023).
 	""")
@@ -75,27 +97,33 @@ def ui_info():
 	ui_spacer(1)
 	ui_spacer(1)
 
-	
-api_key=st.secrets["OPENAI_KEY"]
-model.use_key(api_key)
-ss['api_key']=api_key
-
-if 'data_dict' not in ss: ss['data_dict'] = {} # used only with DictStorage
-ss['storage'] = storage.get_storage(api_key, data_dict=ss['data_dict'])
-ss['user'] = ss['storage'].folder # TODO: refactor user 'calculation' from get_storage
-ss['stats'] = stats.get_stats(ss['user'])
-ss['feedback'] = feedback.get_feedback_adapter(ss['user'])
-ss['feedback_score'] = ss['feedback'].get_score()
-ss['debug']['storage.folder'] = ss['storage'].folder
-ss['debug']['storage.class'] = ss['storage'].__class__.__name__
+def ui_api_key():
+	if ss['community_user']:
+		st.write('## 1. Optional - enter your OpenAI API key')
+		t1,t2 = st.tabs(['community version','enter your own API key'])
+		with t1:
+			pct = model.community_tokens_available_pct()
+			st.write(f'Community tokens available: :{"green" if pct else "red"}[{int(pct)}%]')
+			st.progress(pct/100)
+			st.write('Refresh in: ' + model.community_tokens_refresh_in())
+			st.write('You can sign up to OpenAI and/or create your API key [here](https://platform.openai.com/account/api-keys)')
+			ss['community_pct'] = pct
+			ss['debug']['community_pct'] = pct
+		with t2:
+			st.text_input('OpenAI API key', type='password', key='api_key', on_change=on_api_key_change, label_visibility="collapsed")
+	else:
+		st.write('## 1. Enter your OpenAI API key')
+		st.text_input('OpenAI API key', type='password', key='api_key', on_change=on_api_key_change, label_visibility="collapsed")
 
 def index_pdf_file():
 	if ss['pdf_file']:
 		ss['filename'] = ss['pdf_file'].name
-		index = model.index_file(ss['pdf_file'], fix_text=False, frag_size=0, pg=ss['pg_index'], stats=ss['stats'])
-		ss['debug']['stats'] = ss['stats'].get('usage:v2:{date}:{user}')
-		ss['index'] = index
-		debug_index()
+		if ss['filename'] != ss.get('fielname_done'): # UGLY
+			with st.spinner(f'indexing {ss["filename"]}'):
+				index = model.index_file(ss['pdf_file'], ss['filename'], fix_text=ss['fix_text'], frag_size=ss['frag_size'], cache=ss['cache'])
+				ss['index'] = index
+				debug_index()
+				ss['filename_done'] = ss['filename'] # UGLY
 
 def debug_index():
 	index = ss['index']
@@ -111,33 +139,33 @@ def debug_index():
 	ss['debug']['index'] = d
 
 def ui_pdf_file():
-	st.write('## 1. Uploadez un nouveau document :')
-	disabled = False
-	#t1,t2 = st.tabs(['Uploader','Sélectionner'])
-	#with t1:
-	ss['pg_index'] = st.progress(0)
+	st.write('## 1. Uploadez un nouveau document :')	
+	disabled = not ss.get("api_key")
+	#t1,t2 = st.tabs(['Charger','Sélectionner'])
+	# with t1:
 	st.file_uploader('pdf file', type='pdf', key='pdf_file', disabled=disabled, on_change=index_pdf_file, label_visibility="collapsed")
-		#b_save()
-	#with t2:
-	#	filenames = ['']
-	#	if ss.get('storage'):
-	#		filenames += ss['storage'].list()
-	#	def on_change():
-	#		name = ss['selected_file']
-	#		if name and ss.get('storage'):
-	#			with ss['spin_select_file']:
-	#				with st.spinner('loading index'):
-	#					t0 = now()
-	#					index = ss['storage'].get(name)
-	#					ss['debug']['storage_get_time'] = now()-t0
-	#			ss['filename'] = name # XXX
-	#			ss['index'] = index
-	#			debug_index()
-	#		else:
-	#			ss['index'] = {}
-	#	st.selectbox('select file', filenames, on_change=on_change, key='selected_file', label_visibility="collapsed")
-	#	b_delete()
-	#	ss['spin_select_file'] = st.empty()
+	# 	b_save()
+	# with t2:
+	# 	filenames = ['']
+	# 	if ss.get('storage'):
+	# 		filenames += ss['storage'].list()
+	# 	def on_change():
+	# 		name = ss['selected_file']
+	# 		if name and ss.get('storage'):
+	# 			with ss['spin_select_file']:
+	# 				with st.spinner('loading index'):
+	# 					t0 = now()
+	# 					index = ss['storage'].get(name)
+	# 					ss['debug']['storage_get_time'] = now()-t0
+	# 			ss['filename'] = name # XXX
+	# 			ss['index'] = index
+	# 			debug_index()
+	# 		else:
+	# 			#ss['index'] = {}
+	# 			pass
+	# 	st.selectbox('select file', filenames, on_change=on_change, key='selected_file', label_visibility="collapsed", disabled=disabled)
+	# 	b_delete()
+	# 	ss['spin_select_file'] = st.empty()
 
 def ui_show_debug():
 	st.checkbox('show debug section', key='show_debug')
@@ -158,8 +186,8 @@ def ui_fragments():
 	st.number_input('fragments after',  0, 3, 1, key='n_frag_after')  # TODO: pass to model
 
 def ui_model():
-	models = ['gpt-3.5-turbo','text-davinci-003','text-curie-001']
-	st.selectbox('main model', models, key='model')
+	models = ['gpt-3.5-turbo','gpt-4','text-davinci-003','text-curie-001']
+	st.selectbox('main model', models, key='model', disabled=not ss.get('api_key'))
 	st.selectbox('embedding model', ['text-embedding-ada-002'], key='model_embed') # FOR FUTURE USE
 
 def ui_hyde():
@@ -237,12 +265,10 @@ def b_ask():
 					limit=max_frags+2,
 					n_before=n_before,
 					n_after=n_after,
-					stats=ss['stats'],
 					model=ss['model'],
 				)
 		usage = resp.get('usage',{})
 		usage['cnt'] = 1
-		ss['debug']['stats'] = ss['stats'].get('usage:v2:{date}:{user}')
 		ss['debug']['model.query.resp'] = resp
 		ss['debug']['resp.usage'] = usage
 		ss['debug']['model.vector_query_time'] = resp['vector_query_time']
@@ -270,8 +296,10 @@ def b_save():
 	db = ss.get('storage')
 	index = ss.get('index')
 	name = ss.get('filename')
-	help = "The file will be stored for about 90 days."
-	if st.button('save encrypted index in ask-my-pdf', disabled=not db or not index or not name, help=help):
+	api_key = ss.get('api_key')
+	disabled = not api_key or not db or not index or not name
+	help = "The file will be stored for about 90 days. Available only when using your own API key."
+	if st.button('save encrypted index in ask-my-pdf', disabled=disabled, help=help):
 		with st.spinner('saving to ask-my-pdf'):
 			db.put(name, index)
 
@@ -311,6 +339,7 @@ with st.sidebar:
 		ui_hyde_prompt()
 
 add_logo()
+#ui_api_key()
 ui_pdf_file()
 ui_question()
 ui_hyde_answer()

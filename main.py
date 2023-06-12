@@ -1,1 +1,1 @@
-STREprint("Hello CodeSandbox!")
+print("Hello CodeSandbox!")
