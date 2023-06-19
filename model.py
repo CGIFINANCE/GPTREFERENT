@@ -14,8 +14,8 @@ import ai
 def use_key(api_key):
 	ai.use_key(api_key)
 
-# def set_user(user):
-# 	ai.set_user(user)
+def set_user(user):
+	ai.set_user(user)
 
 def query_by_vector(vector, index, limit=None):
 	"return (ids, distances and texts) sorted by cosine distance"

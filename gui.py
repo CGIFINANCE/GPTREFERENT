@@ -39,12 +39,13 @@ def on_api_key_change():
 	ss['storage'] = storage.get_storage(api_key, data_dict=ss['data_dict'])
 	ss['cache'] = cache.get_cache()
 	ss['user'] = ss['storage'].folder # TODO: refactor user 'calculation' from get_storage
-	#model.set_user(ss['user'])
+	model.set_user(ss['user'])
 	ss['feedback'] = feedback.get_feedback_adapter(ss['user'])
 	ss['feedback_score'] = ss['feedback'].get_score()
 	#
 	ss['debug']['storage.folder'] = ss['storage'].folder
 	ss['debug']['storage.class'] = ss['storage'].__class__.__name__
+
 
 # ss['community_user'] = os.getenv('COMMUNITY_USER')
 # if 'user' not in ss and ss['community_user']:
@@ -186,7 +187,7 @@ def ui_fragments():
 	st.number_input('fragments after',  0, 3, 1, key='n_frag_after')  # TODO: pass to model
 
 def ui_model():
-	models = ['gpt-3.5-turbo','gpt-4','text-davinci-003','text-curie-001']
+	models = ['text-davinci-003','gpt-3.5-turbo','gpt-4','text-curie-001']
 	st.selectbox('main model', models, key='model', disabled=not ss.get('api_key'))
 	st.selectbox('embedding model', ['text-embedding-ada-002'], key='model_embed') # FOR FUTURE USE
 
