@@ -70,7 +70,7 @@ resources: {}
 
 extraEnv:
   - name: OPENAPI_KEY
-    value: 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
+    value: <à définir>
   - name: STREAMLIT_SERVER_ADDRESS
     value: localhost
 
