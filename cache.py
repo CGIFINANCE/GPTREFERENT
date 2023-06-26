@@ -61,8 +61,12 @@ class Cache:
 class DiskCache(Cache):
 	"Local disk based cache"
 
-	def __init__(self, root):
-		self.root = root
+	def __init__(self, path):
+		if not path:
+			raise Exception('No storage path in environment variables!')
+		self.root = path	
+		if not os.path.exists(path):
+			os.makedirs(path)
 	
 	def path(self, key):
 		return os.path.join(self.root, self.encode(key))
