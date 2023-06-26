@@ -1,5 +1,5 @@
 __version__ = "1"
-app_name = "Ask my PDF"
+app_name = "GPT Référent"
 
 
 # BOILERPLATE
@@ -142,31 +142,27 @@ def debug_index():
 def ui_pdf_file():
 	st.write('## 1. Uploadez un nouveau document :')	
 	disabled = not ss.get("api_key")
-	#t1,t2 = st.tabs(['Charger','Sélectionner'])
-	# with t1:
-	st.file_uploader('pdf file', type='pdf', key='pdf_file', disabled=disabled, on_change=index_pdf_file, label_visibility="collapsed")
-	# 	b_save()
-	# with t2:
-	# 	filenames = ['']
-	# 	if ss.get('storage'):
-	# 		filenames += ss['storage'].list()
-	# 	def on_change():
-	# 		name = ss['selected_file']
-	# 		if name and ss.get('storage'):
-	# 			with ss['spin_select_file']:
-	# 				with st.spinner('loading index'):
-	# 					t0 = now()
-	# 					index = ss['storage'].get(name)
-	# 					ss['debug']['storage_get_time'] = now()-t0
-	# 			ss['filename'] = name # XXX
-	# 			ss['index'] = index
-	# 			debug_index()
-	# 		else:
-	# 			#ss['index'] = {}
-	# 			pass
-	# 	st.selectbox('select file', filenames, on_change=on_change, key='selected_file', label_visibility="collapsed", disabled=disabled)
-	# 	b_delete()
-	# 	ss['spin_select_file'] = st.empty()
+	t1,t2 = st.tabs(['Charger','Supprimer'])	
+	with t1:
+		st.file_uploader('pdf file', type='pdf', key='pdf_file', disabled=disabled, on_change=index_pdf_file, label_visibility="collapsed")
+		b_save()
+	with t2:
+		filenames = ['']
+		if ss.get('storage'):
+			filenames = ss['storage'].list()
+		def on_change():
+			name = ss['selected_file']
+			if name and ss.get('storage'):
+				index = ss['storage'].get(name)
+				ss['filename'] = name # XXX
+				ss['index'] = index
+				debug_index()
+			else:
+				ss['index'] = {}
+				pass
+		st.selectbox('select file', filenames, on_change=on_change, key='selected_file', label_visibility="collapsed", disabled=disabled)
+		b_delete()
+		ss['spin_select_file'] = st.empty()		
 
 def ui_show_debug():
 	st.checkbox('show debug section', key='show_debug')
@@ -187,7 +183,7 @@ def ui_fragments():
 	st.number_input('fragments after',  0, 3, 1, key='n_frag_after')  # TODO: pass to model
 
 def ui_model():
-	models = ['text-davinci-003','gpt-3.5-turbo','gpt-4','text-curie-001']
+	models = ['gpt-3.5-turbo','gpt-4','text-curie-001']
 	st.selectbox('main model', models, key='model', disabled=not ss.get('api_key'))
 	st.selectbox('embedding model', ['text-embedding-ada-002'], key='model_embed') # FOR FUTURE USE
 
@@ -228,20 +224,7 @@ def ui_debug():
 
 
 def b_ask():
-	c1,c2,c3,c4,c5 = st.columns([2,1,1,2,2])
-	if c2.button('👍', use_container_width=True, disabled=not ss.get('output')):
-		ss['feedback'].send(+1, ss, details=ss['send_details'])
-		ss['feedback_score'] = ss['feedback'].get_score()
-	if c3.button('👎', use_container_width=True, disabled=not ss.get('output')):
-		ss['feedback'].send(-1, ss, details=ss['send_details'])
-		ss['feedback_score'] = ss['feedback'].get_score()
-	score = ss.get('feedback_score',0)
-	c5.write(f'feedback score: {score}')
-	c4.checkbox('garder details', True, key='send_details',
-			help='garder historique question et réponses')
-	#c1,c2,c3 = st.columns([1,3,1])
-	#c2.radio('zzz',['👍',r'...',r'👎'],horizontal=True,label_visibility="collapsed")
-	#
+	c1,c2,c3,c4,c5 = st.columns([2,1,1,2,2])	
 	disabled = not ss.get('api_key') or not ss.get('index')
 	if c1.button('Obtenez la réponse', disabled=disabled, type='primary', use_container_width=True):
 		question = ss.get('question','')
@@ -300,16 +283,16 @@ def b_save():
 	api_key = ss.get('api_key')
 	disabled = not api_key or not db or not index or not name
 	help = "The file will be stored for about 90 days. Available only when using your own API key."
-	if st.button('save encrypted index in ask-my-pdf', disabled=disabled, help=help):
-		with st.spinner('saving to ask-my-pdf'):
+	if st.button('Enregistrer le document', disabled=disabled, help=help):
+		with st.spinner('Enregistrement du document en cours...'):
 			db.put(name, index)
 
 def b_delete():
 	db = ss.get('storage')
 	name = ss.get('selected_file')
 	# TODO: confirm delete
-	if st.button('delete from ask-my-pdf', disabled=not db or not name):
-		with st.spinner('deleting from ask-my-pdf'):
+	if st.button('Supprimer le document', disabled=not db or not name):
+		with st.spinner('Suppression du document en cours...'):
 			db.delete(name)
 		st.experimental_rerun()
 

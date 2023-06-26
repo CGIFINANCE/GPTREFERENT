@@ -142,8 +142,7 @@ class LocalStorage(Storage):
 		return data
 	
 	def _list(self):
-		# TODO: sort by modification time (reverse=True)
-		return os.listdir(self.path)
+		return [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
 	
 	def _delete(self, name):
 		os.remove(os.path.join(self.path, name))

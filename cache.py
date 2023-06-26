@@ -97,7 +97,7 @@ class S3Cache(Cache):
 	"S3 based cache"
 
 	def __init__(self, **kw):
-		bucket = kw.get('bucket') or os.getenv('S3_CACHE_BUCKET','ask-my-pdf')
+		bucket = kw.get('bucket') or os.getenv('S3_CACHE_BUCKET','GPT Référent')
 		prefix = kw.get('prefix') or os.getenv('S3_CACHE_PREFIX','cache/x1')
 		region = kw.get('region') or os.getenv('S3_REGION','sfo3')
 		url    = kw.get('url')    or os.getenv('S3_URL',f'https://{region}.digitaloceanspaces.com')
