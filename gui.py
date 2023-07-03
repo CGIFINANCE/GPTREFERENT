@@ -89,10 +89,10 @@ def ui_spacer(n=2, line=False, next_n=0):
 
 def ui_info():
 	st.markdown(f"""
-	# Ask my PDF
+	# Super assistant
 	version {__version__}
 	
-	Projet Mon super assistant (construit à partir des API OPENAI L. BOUDET 03/2023).
+	Projet Mon super assistant
 	""")
 	ui_spacer(1)
 	ui_spacer(1)
@@ -142,27 +142,34 @@ def debug_index():
 def ui_pdf_file():
 	st.write('## 1. Uploadez un nouveau document :')	
 	disabled = not ss.get("api_key")
-	t1,t2 = st.tabs(['Charger','Supprimer'])	
+	t1,t2 = st.tabs(['Sélectionner', 'Charger'])	
 	with t1:
-		st.file_uploader('pdf file', type='pdf', key='pdf_file', disabled=disabled, on_change=index_pdf_file, label_visibility="collapsed")
-		b_save()
-	with t2:
 		filenames = ['']
 		if ss.get('storage'):
 			filenames = ss['storage'].list()
-		def on_change():
-			name = ss['selected_file']
-			if name and ss.get('storage'):
+			if ss.get('index') == None:
+				name =  filenames[0]
 				index = ss['storage'].get(name)
 				ss['filename'] = name # XXX
 				ss['index'] = index
-				debug_index()
+		def on_change():
+			name = ss['selected_file']
+			if name and ss.get('storage'):
+				with ss['spin_select_file']:
+					with st.spinner('loading index'):
+						t0 = now()
+						index = ss['storage'].get(name)
+						ss['debug']['storage_get_time'] = now()-t0
+				ss['filename'] = name # XXX
+				ss['index'] = index
 			else:
-				ss['index'] = {}
 				pass
 		st.selectbox('select file', filenames, on_change=on_change, key='selected_file', label_visibility="collapsed", disabled=disabled)
 		b_delete()
-		ss['spin_select_file'] = st.empty()		
+		ss['spin_select_file'] = st.empty()	
+	with t2:
+		st.file_uploader('pdf file', type='pdf', key='pdf_file', disabled=disabled, on_change=index_pdf_file, label_visibility="collapsed")
+		b_save()
 
 def ui_show_debug():
 	st.checkbox('show debug section', key='show_debug')
@@ -185,7 +192,7 @@ def ui_fragments():
 def ui_model():
 	models = ['gpt-3.5-turbo','gpt-4','text-curie-001']
 	st.selectbox('main model', models, key='model', disabled=not ss.get('api_key'))
-	st.selectbox('embedding model', ['text-embedding-ada-002'], key='model_embed') # FOR FUTURE USE
+	st.selectbox('embedding model', ['text-em bedding-ada-002'], key='model_embed') # FOR FUTURE USE
 
 def ui_hyde():
 	st.checkbox('use HyDE', value=True, key='use_hyde')
@@ -225,8 +232,7 @@ def ui_debug():
 
 def b_ask():
 	c1,c2,c3,c4,c5 = st.columns([2,1,1,2,2])	
-	disabled = not ss.get('api_key') or not ss.get('index')
-	if c1.button('Obtenez la réponse', disabled=disabled, type='primary', use_container_width=True):
+	if c1.button('Obtenez la réponse', disabled=False, type='primary', use_container_width=True):
 		question = ss.get('question','')
 		temperature = ss.get('temperature', 0.0)
 		hyde = ss.get('use_hyde')
@@ -308,19 +314,22 @@ def output_add(q,a):
 with st.sidebar:
 	ui_info()
 	ui_spacer(2)
-	with st.expander('advanced'):
-		ui_show_debug()
-		b_clear()
-		ui_model()
-		ui_fragments()
-		ui_fix_text()
-		ui_hyde()
-		ui_hyde_summary()
-		ui_temperature()
-		b_reload()
-		ui_task_template()
-		ui_task()
-		ui_hyde_prompt()
+	if os.getenv('ADVANCED_USER'):
+		with st.expander('advanced'):
+			ui_show_debug()
+			b_clear()
+			ui_model()
+			ui_fragments()
+			ui_fix_text()
+			ui_hyde()
+			ui_hyde_summary()
+			ui_temperature()
+			b_reload()
+			ui_task_template()
+			ui_task()
+			ui_hyde_prompt()
+	else:
+		ss['model'] = 'gpt-3.5-turbo'
 
 add_logo()
 #ui_api_key()
