@@ -330,6 +330,8 @@ with st.sidebar:
 			ui_hyde_prompt()
 	else:
 		ss['model'] = 'gpt-3.5-turbo'
+		ss['fix_text'] = True
+		ss['frag_size'] = 400
 
 add_logo()
 #ui_api_key()
