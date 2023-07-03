@@ -147,7 +147,7 @@ def ui_pdf_file():
 		filenames = ['']
 		if ss.get('storage'):
 			filenames = ss['storage'].list()
-			if ss.get('index') == None:
+			if ss.get('index') == None and len(filenames) > 0:
 				name =  filenames[0]
 				index = ss['storage'].get(name)
 				ss['filename'] = name # XXX
